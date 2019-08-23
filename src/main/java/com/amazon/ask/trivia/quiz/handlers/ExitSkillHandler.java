@@ -10,17 +10,28 @@ import java.util.Optional;
 
 import static com.amazon.ask.request.Predicates.intentName;
 import static com.amazon.ask.request.Predicates.sessionAttribute;
-
+/**
+ * ExitSkillHandler handler for handling stop requests.
+ */
 public class ExitSkillHandler implements RequestHandler {
 
+  /**
+   * Checking Intent matches AMAZON.StopIntent or AMAZON.PauseIntent or AMAZON.CancelIntent.
+   * @param input
+   * @return boolean
+   */
     @Override
     public boolean canHandle(HandlerInput input) {
         return input.matches(intentName("AMAZON.StopIntent")
                 .or(intentName("AMAZON.PauseIntent")
                 .or(intentName("AMAZON.CancelIntent"))));
-
     }
 
+  /**
+   * Handles AMAZON.StopIntent, AMAZON.PauseIntent, AMAZON.CancelIntent.
+   * @param input
+   * @return String
+   */
     @Override
     public Optional<Response> handle(HandlerInput input) {
         return input.getResponseBuilder()

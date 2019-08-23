@@ -15,37 +15,69 @@ import main.java.com.amazon.ask.trivia.quiz.models.Question;
 import main.java.com.amazon.ask.trivia.quiz.util.QuestionUtils;
 
 import static com.amazon.ask.request.Predicates.*;
+import static main.java.com.amazon.ask.trivia.quiz.models.Attributes.QUESTIONS_PLAYED;
 import static main.java.com.amazon.ask.trivia.quiz.models.Attributes.TRIVIA_QUIZ_ITEM_KEY;
 
 import java.util.*;
+import java.util.logging.Level;
 
-
+/**
+ * AnswerIntentHandler handler for handling answers requests.
+ */
 public class AnswerIntentHandler implements RequestHandler {
+    /**
+     * The questions played list.
+     */
+    private List<String> questionsPlayed = new ArrayList<>();
 
+    /**
+     * The random.
+     */
     private static final Random RANDOM = new Random();
 
+    /**
+     * Checking Intent matches AnswerIntent.
+     * @param input
+     * @return boolean
+     */
     @Override
     public boolean canHandle(HandlerInput input) {
         return input.matches(intentName("AnswerIntent")
                 .and(sessionAttribute(Attributes.STATE_KEY, Attributes.QUIZ_STATE)));
     }
-
+    /**
+     * Handles AnswerIntentHandler.
+     * @param input the user input
+     * @return String
+     */
     @Override
     public Optional<Response> handle(HandlerInput input) {
         Map<String, Object> sessionAttributes = input.getAttributesManager().getSessionAttributes();
+        Map<String, Object> persistenceAttributes = input.getAttributesManager().getPersistentAttributes();
+
+        int counter = (int) sessionAttributes.get(Attributes.COUNTER_KEY);
+        int quizScore = (int) sessionAttributes.get(Attributes.TRIVIA_QUIZ_SCORE_KEY);
 
         String responseText;
         String speechOutput;
 
         String correctAnswer = sessionAttributes.get(Attributes.TRIVIA_QUIZ_PROPERTY_KEY).toString();
         String previousQuestion = sessionAttributes.get(TRIVIA_QUIZ_ITEM_KEY).toString();
+        questionsPlayed.add(previousQuestion);
         String additionalInformation = Question.ADDITIONAL_INFORMATION.get(previousQuestion);
 
-        int counter = (int) sessionAttributes.get(Attributes.COUNTER_KEY);
-        int quizScore = (int) sessionAttributes.get(Attributes.TRIVIA_QUIZ_SCORE_KEY);
+        if(counter == 0) {
+            persistenceAttributes.clear();
+        }
+
+        persistenceAttributes.put(QUESTIONS_PLAYED, questionsPlayed);
+        input.getAttributesManager().setPersistentAttributes(persistenceAttributes);
+        input.getAttributesManager().savePersistentAttributes();
 
         //gets the users input -> RequestEnvelope (it should be yes or no)
         IntentRequest intentRequest = (IntentRequest) input.getRequestEnvelope().getRequest();
+        //logging for debugging purposes
+        java.util.logging.Logger.getLogger(AnswerIntentHandler.class.getCanonicalName()).log(Level.INFO, intentRequest.getIntent().getSlots().values().toString());
 
         boolean isCorrectAnswer = compareSlots(intentRequest.getIntent().getSlots(), correctAnswer);
 
@@ -69,9 +101,13 @@ public class AnswerIntentHandler implements RequestHandler {
                     .withShouldEndSession(true)
                     .build();
         }
-
     }
 
+    /**
+     * Gets the appropriate interjection.
+     * @param correct the flag for correct answer
+     * @return
+     */
     private String getSpeechCon(boolean correct) {
         if (correct) {
             return "<say-as interpret-as='interjection'>" + getRandomItem(Constants.CORRECT_RESPONSES) + "! </say-as><break strength='strong'/>";
@@ -80,24 +116,25 @@ public class AnswerIntentHandler implements RequestHandler {
         }
     }
 
+    /**
+     * Gets random item from list.
+     * @param list the list
+     * @return int
+     */
     private <T> T getRandomItem(List<T> list) {
         return list.get(RANDOM.nextInt(list.size()));
     }
 
-
-   /* private boolean compareSlots(Map<String, Slot> slots, String correctAnswer) {
-        for (Slot slot : slots.values()) {
-            if (slot.getValue() != null && slot.getValue().toLowerCase().equals(correctAnswer.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-
+    /**
+     * Compares the users answer to actual correct answer.
+     * @param slots
+     * @param correctAnswer
+     * @return boolean
+     */
     private boolean compareSlots(Map<String, Slot> slots, String correctAnswer) {
-        for(Slot slot : slots.values()) {
+        for (Slot slot : slots.values()) {
 
-            if(slot.getValue() != null) {
+            if (slot.getValue() != null) {
 
                 Resolutions resolutions = slot.getResolutions();
                 List<Resolution> resolutionsList = resolutions.getResolutionsPerAuthority();
