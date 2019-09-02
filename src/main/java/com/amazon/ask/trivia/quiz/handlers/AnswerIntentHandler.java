@@ -20,11 +20,13 @@ import static main.java.com.amazon.ask.trivia.quiz.models.Attributes.TRIVIA_QUIZ
 
 import java.util.*;
 import java.util.logging.Level;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * AnswerIntentHandler handler for handling answers requests.
  */
 public class AnswerIntentHandler implements RequestHandler {
+
     /**
      * The questions played list.
      */
@@ -34,6 +36,7 @@ public class AnswerIntentHandler implements RequestHandler {
      * The random.
      */
     private static final Random RANDOM = new Random();
+
 
     /**
      * Checking Intent matches AnswerIntent.
@@ -65,10 +68,6 @@ public class AnswerIntentHandler implements RequestHandler {
         String previousQuestion = sessionAttributes.get(TRIVIA_QUIZ_ITEM_KEY).toString();
         questionsPlayed.add(previousQuestion);
         String additionalInformation = Question.ADDITIONAL_INFORMATION.get(previousQuestion);
-
-        if(counter == 0) {
-            persistenceAttributes.clear();
-        }
 
         persistenceAttributes.put(QUESTIONS_PLAYED, questionsPlayed);
         input.getAttributesManager().setPersistentAttributes(persistenceAttributes);

@@ -7,6 +7,7 @@ import main.java.com.amazon.ask.trivia.quiz.models.Attributes;
 import main.java.com.amazon.ask.trivia.quiz.util.QuestionUtils;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.amazon.ask.request.Predicates.intentName;
 import static com.amazon.ask.request.Predicates.sessionAttribute;
